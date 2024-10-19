@@ -1,0 +1,94 @@
+---
+title: "Untitled"
+author: "Yufei Wang"
+date: "2024-10-10"
+output: html_document
+---
+
+```{r}
+library(dplyr)
+library(readxl)
+```
+
+Count the number of distinct family/genus/species/variety in each campus
+```{r}
+data <- read.csv("/Users/Esther./Desktop/UOM_PLANT_INVENTORY.csv")
+
+# Filter the data
+sth_data <- data %>%
+  filter(Campus == "SPT")
+
+# Remove blank or NA values
+sth_data <- sth_data %>%
+  filter(!is.na(Botanical_Name) & Botanical_Name != "")
+
+# Count distinct family/genus/species/variety
+distinct <- sth_data %>%
+  summarise(distinct = n_distinct(Botanical_Name))
+
+# Print the result
+print(distinct)
+```
+
+Count the total number of distinct family/genus/species/variety
+```{r}
+# Remove blank or NA values
+data <- data %>%
+  filter(!is.na(Botanical_Name) & Botanical_Name != "")
+
+# Count distinct family/genus/species/variety
+distinct <- data %>%
+  summarise(distinct = n_distinct(Botanical_Name))
+
+# Print the result
+print(distinct)
+```
+
+Count blank rows in 'Group Habit Photo' and 'Plant Habit Photo'
+```{r}
+suppressWarnings({
+
+  data = read_excel("/Users/Esther./Desktop/UOM_PLANT_INVENTORY.xlsx")
+  
+  # Trim leading and trailing spaces in two columns
+  data$`Group Habit Photo` <- trimws(data$`Group Habit Photo`)
+  data$`Plant Habit Photo` <- trimws(data$`Plant Habit Photo`)
+
+  # Count blank rows in 'Group Habit Photo' column
+  group_habit_blank <- sum(data$`Group Habit Photo` == "" | is.na(data$`Group Habit Photo`))
+
+  # Count blank rows in 'Plant Habit Photo' column
+  plant_habit_blank <- sum(data$`Plant Habit Photo` == "" | is.na(data$`Plant Habit Photo`))
+
+  # Print the results
+  print(paste("Blank rows in 'Group Habit Photo':", group_habit_blank))
+  print(paste("Blank rows in 'Plant Habit Photo':", plant_habit_blank))
+})
+```
+
+
+Count species missing values
+```{r}
+suppressWarnings({
+  # Define the list of columns to check for missing values
+  columns_to_check <- c(
+    'Flower Photo 1', 'Flower Photo 2', 'Foliage Photo 1', 'Foliage Photo 2',
+    'Fruit Cone Photo 1', 'Fruit Cone Photo 1.1', 'Bark Stem Photo 1', 'Bark Stem Photo 2',
+    'Bud Photo', 'Seed Photo', 'Species Habit Photo'
+  )
+  
+  # Group by 'Binomial Name' and count missing values for each group
+  missing_counts <- data %>%
+    group_by(`Binomial Name`) %>%
+    summarise(across(all_of(columns_to_check), ~ sum(is.na(.)), .names = "missing_{col}")) %>%
+    rowwise() %>%
+    mutate(max_missing = max(c_across(starts_with("missing_"))))
+  
+  # Sum the total number of unique missing values across all groups
+  total_missing <- sum(missing_counts$max_missing)
+  
+  # Print the result
+  print(total_missing)
+})
+```
+
